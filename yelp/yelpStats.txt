@@ -1,0 +1,91 @@
+Seattle: Aug. 9th. 2017
+    Restaurants
+
+        American & fusion (newamerican locs: 390 calls: 93) / (tradamerican locs: 405 calls: 77) 
+
+        Chinese (chinese locs: 342 calls: 65) 
+
+        French (french locs: 38 calls: 9) 
+
+        Indian (indpak locs: 116 calls: 37) 
+
+        Italian (italian locs: 247 calls: 41) 
+
+        Japanese (japanese locs: 425 calls: 85) 
+
+        Mexican (mexican locs: 480 calls: 105) 
+
+        Mediterranean (mediterranean locs: 148 calls: 33) 
+
+        Thai (thai locs: 226 calls: 45) 
+
+        Vegan (vegan locs: 54 calls: 17)
+
+        Vegetarian (vegetarian locs: 77 calls: 21)
+
+    Cafe
+
+        Cafes (cafes locs: 269  calls: 53 )  / (coffee locs: 1095 calls: 193) / (coffeeroasteries locs: 30 calls: 5)
+
+        Bubble Tea (bubbletea locs: 59 calls: 5) 
+
+        Tea (tea locs: 29 calls: 5)
+
+        Juice Bars & Smoothies (juicebars locs: 143 calls: 33)
+
+        Desserts (desserts locs: 227 calls: 49)
+
+        Ice Cream (icecream locs: 194 calls: 37)  / (gelato locs: 15 calls: 1)
+
+    Travel attractions
+
+        Landmarks & Historical Buildings (landmarks locs: 54 calls: 17)
+
+        Museums (museums locs: 63 calls: 13)
+
+        Aquariums (aquariums locs: 1 calls: 1) 
+
+        Parks (parks locs: 473 calls: 85) 
+
+        Beaches (beaches locs: 45 calls: 5)
+
+        Amusement Parks (amusementparks locs: 10 calls: 1)
+
+        Zoos (zoos locs: 3 calls: 1)
+
+        Performing Arts (theater locs: 247 calls: 61)
+
+    Shopping
+
+        Arts & Crafts (artsandcrafts locs: 324 calls: 61)
+
+        Bookstores (bookstores locs: 91 calls: 25)
+
+        Cosmetics & Beauty Supply (cosmetics locs: 232 calls: 57)
+
+        Department Stores (deptstores locs: 128 calls: 33)
+
+        Drugstores (drugstores locs: 269 calls: 41)
+
+        Electronics (electronics locs: 158 calls: 41) 
+
+        Fashion & Jewelry (fashion locs: 1100 calls: 285) / (jewelry locs: 347 calls: 89) 
+
+        Grocery (grocery locs: 463 calls: 77)
+
+    Nightlife
+
+        Bars(bars locs: 1091 calls: 241) 
+
+        Beer Gardens (beergardens locs: 13 calls: 1) 
+
+        Jazz & Blues (jazzandblues locs: 7 calls: 1)
+
+        Karaoke (karaoke locs: 49 calls: 9)
+
+        Comedy Clubs (comedyclubs locs: 9 calls: 1) 
+
+        Music Venues (musicvenues locs: 87 calls: 25)
+
+        Dance Clubs (danceclubs locs: 35 calls: 17) 
+

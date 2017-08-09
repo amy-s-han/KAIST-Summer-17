@@ -3,12 +3,12 @@
 
 # Amy Han - Summer 2017 - KIXLAB
 # Uses quad tree search method and the Yelp 2.0 API to find all locations 
-# in the Greater Seattle area within one location category. Writes out a
-# tsv file with [ id, name, rating, rating_cnt, url_yelp_mobile, url_yelp, 
-#               categories, info_phone, info_address, info_city, 
-#               info_country, loc_x, loc_y ]
+# in the Greater Seattle area for a list of categories. Writes out tsv
+# files with [ id, name, rating, rating_cnt, url_yelp_mobile, url_yelp, 
+#              categories, info_phone, info_address, info_city, 
+#              info_country, loc_x, loc_y ]
 
-# This tsv file can then be fed into the scrapeYelpFromFile python script
+# The tsv files can then be fed into the scrapeYelpFromFile python script
 # to get more information about the locations from Yelp.
 
 # For areas around malls/shopping centers where there may be more than 20
@@ -25,14 +25,22 @@ import os.path
 import oauth2
 import threading
 import time
+import sys
 
 city = "seattleData/"
-locType = "danceclubs"
+locType = "amusementparks"
 count = 0
 filename = ""
 apiHits = 0
 
 foundLocs = {}
+
+destList = ["newamerican", "tradamerican", "chinese", "french", "indpak", "italian", "japanese", "mexican",
+            "mediterranean", "thai", "vegan", "vegetarian", "cafes", "coffee", "coffeeroasteries", "bubbletea",
+            "tea", "juicebars", "desserts", "icecream", "gelato", "landmarks", "museums", "aquariums", "parks",
+            "beaches", "amusementparks", "zoos", "theaters", "artsandcrafts", "bookstores", "cosmetics", 
+            "deptstores", "drugstores", "electronics", "fashion", "jewelry", "grocery", "bars", "beergardens", 
+            "jazzandblues", "karaoke", "comedyclubs", "musicvenues", "danceclubs"]
 
 g_box ={ #geographical bounding box
   "S":47.395, #SW latitude : 47.3956
@@ -115,9 +123,11 @@ def getBusinessData(data):
       fout.write(line_each)
       fout.close()
 
-      print "[" + str(count) + "] Added "+ data['businesses'][i]['id'].encode('utf8')
+      print ".",
+      sys.stdout.flush()
+      # print "[" + str(count) + "] Added "+ data['businesses'][i]['id'].encode('utf8')
   
-  print "Sum: " + str(count - startCount) + " points were added."  
+  # print "Sum: " + str(count - startCount) + " points were added."  
 
 
 def quadSearch(xStart, xEnd, yStart, yEnd):
@@ -157,7 +167,7 @@ def quadSearch(xStart, xEnd, yStart, yEnd):
     yMid = round(yStart - (yStart - yEnd)/2.0, 4)
     if abs(xEnd-xMid) < 0.001 or abs(yEnd-yMid) < 0.001:
       # print abs(xEnd-xMid), abs(yEnd-yMid)
-      print "just getting data even though >20"
+      # print "just getting data even though >20"
       getBusinessData(data)
     else:
       quadSearch(xStart, xMid, yStart, yMid)
@@ -175,27 +185,53 @@ def main():
   reload(sys);
   sys.setdefaultencoding('utf8');
 
+  global locType
   global filename
+  global apiHits
+  global count
+  global foundLocs
 
-  filename = city + locType + ".tsv"
+  start = time.time()
 
-  #add header
-  fout = open(filename, "w")
-  line_header = 'id'+'\t'+'name'+'\t'+'rating'+'\t'+'rating_cnt'+'\t'+'url_yelp_mobile'+'\t'+'url_yelp'+'\t'+'categories'+'\t'+'info_phone'+'\t'+'info_address'+'\t'+'info_city'+'\t'+'info_zip'+'\t'+'info_country'+'\t'+'loc_x'+'\t'+'loc_y'+'\n'
-  fout.write(line_header)
-  fout.close()
+  for dest in destList:
 
-  print "starting quad search for location: " + locType
-  quadSearch(g_box["W"], g_box["E"], g_box["N"], g_box["S"])
+    locType = dest
+    filename = city + dest + ".tsv"
 
-  print "Hit the api", apiHits, "times.\n"
+    #add header
+    fout = open(filename, "w")
+    line_header = 'id'+'\t'+'name'+'\t'+'rating'+'\t'+'rating_cnt'+'\t'+'url_yelp_mobile'+'\t'+'url_yelp'+'\t'+'categories'+'\t'+'info_phone'+'\t'+'info_address'+'\t'+'info_city'+'\t'+'info_zip'+'\t'+'info_country'+'\t'+'loc_x'+'\t'+'loc_y'+'\n'
+    fout.write(line_header)
+    fout.close()
 
-  statsFilename = city+"stats.txt"
-  fstats = open(statsFilename, "a")
-  stat = locType + " " + str(count) + " " + str(apiHits) + "\n"
-  fstats.write(stat)
-  fstats.close()
+    print "starting quad search for location: " + locType
+    
+    locStart = time.time()
+    quadSearch(g_box["W"], g_box["E"], g_box["N"], g_box["S"])
+    locEnd = time.time()
 
+    elapsedTime = locEnd - locStart
+
+    print "Took", str(elapsedTime), "seconds. \n"
+
+    print "Hit the api", apiHits, "times and got", count, "locations.\n"
+
+    # write out number of locations and api calls to stats file
+    statsFilename = city+"stats.txt"
+    fstats = open(statsFilename, "a")
+    stat = locType + " " + str(count) + " " + str(apiHits) + str(elapsedTime) + "\n"
+    fstats.write(stat)
+    fstats.close()
+
+    apiHits = 0
+    count = 0
+    foundLocs.clear()
+
+
+
+  end = time.time()
+
+  print "elapsed time:", str(start-end)
 
 if __name__ == "__main__":
     main()
