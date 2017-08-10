@@ -3,6 +3,8 @@
 # Amy Han - Summer 2017 - KIXLAB
 
 import matplotlib.pyplot as plt
+from matplotlib import cm
+from numpy import linspace
 
 city = "seattleData/"
 
@@ -26,15 +28,27 @@ def main():
 
 	fig, ax = plt.subplots()
 
+	locs = []
+	calls = []
+
 	for line in fh:
 		print line
 		line = line.split()
-		x = line[1]
-		y = line[2]
-
-		ax.scatter(x, y, alpha=0.3, edgecolors='none')	
-
+		locs.append(line[1])
+		calls.append(line[2])
+	
 	fh.close()
+
+	start = 0.0
+	stop = 1.0
+	number_of_lines= len(locs)
+	cm_subsection = linspace(start, stop, number_of_lines) 
+
+	colors = [ cm.jet(x) for x in cm_subsection ]
+
+	for i, color in enumerate(colors):
+		ax.scatter(locs[i], calls[i], alpha=0.3, edgecolors='none', color=color)	
+
 	
 	ax.grid(True)
 

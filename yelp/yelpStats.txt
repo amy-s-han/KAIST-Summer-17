@@ -1,4 +1,4 @@
-Seattle: Aug. 9th. 2017
+Seattle: Aug. 9th. 2017 (Took 1834.22556806 seconds -> ~30 min)
     Restaurants
 
         American & fusion (newamerican locs: 390 calls: 93) / (tradamerican locs: 405 calls: 77) 
@@ -53,7 +53,7 @@ Seattle: Aug. 9th. 2017
 
         Zoos (zoos locs: 3 calls: 1)
 
-        Performing Arts (theater locs: 247 calls: 61)
+        Performing Arts (theater locs: 248 calls: 61)
 
     Shopping
 

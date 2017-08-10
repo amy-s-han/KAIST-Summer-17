@@ -27,7 +27,7 @@ import threading
 import time
 
 city = "seattleData/"
-locType = "danceclubs"
+locType = "zoos"
 count = 0
 filename = ""
 apiHits = 0
@@ -54,6 +54,13 @@ yelp_auth2 = { #media.ray.hong@gmail.com
     "t": "iungqKfR4LtiIGYa3AUeDF7nIlCnhgRQ",
     "t_secret": "fcFssUnSlxh5Y4REJlyDE6mGx-c"  
 }
+
+yelp_auth3 = { 
+    "c_key": "KebuzyDt6v1VtHu1BTYiBQ",
+    "c_secret": "lUHtfPGHJpUdqJoENKAIFxiblRA",
+    "t": "USCS2ns3HHCUHAZ8hAvnBpCUEu2NY-zB",
+    "t_secret": "x_benaM_8Cud2ud5_QIMqhubj5M"
+}  
 
 auth = yelp_auth1
 
