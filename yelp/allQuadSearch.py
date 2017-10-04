@@ -17,6 +17,11 @@
 # to return. This is because Yelp returns at most 20 locations for any 
 # api search call. 
 
+# for large cities with weird geometry, you can split it up into rectangle sections and put each section into a g_box.
+# then, just do quadSearch(gbox...) for each section.
+
+
+
 import urllib, urllib2
 import requests, socket
 import rauth
@@ -26,6 +31,7 @@ import oauth2
 import threading
 import time
 import sys
+import json
 
 city = "nyc"
 locType = ""
@@ -34,10 +40,9 @@ filename = ""
 apiHits = 0
 zipsExist = False
 zipCodes = []
+locDict = {}
 
-foundLocs = {}
-
-destList = ["newamerican"]
+destList = ["icecream"]
 
 
 # destList = ["newamerican", "tradamerican", "chinese", "french", "indpak", "italian", "japanese", "mexican",
@@ -48,25 +53,33 @@ destList = ["newamerican"]
 #             "jazzandblues", "karaoke", "comedyclubs", "musicvenues", "danceclubs"]
 
 
-g_box ={ #geographical bounding box for Greater Seattle Area
+g_box ={ # geographical bounding box for Greater Seattle Area
   "S":47.395, #SW latitude : 47.3956
   "W":-122.440, #SW longitude : -122.4379
   "N":47.859, #NE latitude : 47.8591
   "E":-122.075 #NE longitude : -122.0791
 }
 
-g_box1 ={ #geographical bounding box for Staten Island
+g_box1 ={ # geographical bounding box for Staten Island
   "S":40.495979, #SW latitude
   "W":-74.256341, #SW longitude 
   "N":40.650187, #NE latitude
   "E":-74.051666 #NE longitude 
 }
 
-g_box2 ={ #geographical bounding box for Bronx, Brooklyn and Manhattan
+g_box2 ={ # geographical bounding box for Bronx, Brooklyn and Manhattan
   "S":40.530056, #SW latitude
   "W":-74.041617, #SW longitude 
   "N":40.907521, #NE latitude
   "E":-73.685714 #NE longitude 
+}
+
+bb_nyc ={ # geographical bounding box for NYC
+  "S":40.477399, #SW latitude
+  "W":-74.25909, #SW longitude 
+  "N":40.917577, #NE latitude
+  "E":-73.700272 #NE longitude 
+
 }
 
 yelp_auth1 = { 
@@ -87,7 +100,8 @@ auth = yelp_auth2
 
 # Zips to ignore for nyc
 zipsToIgnore = ["11050", "10704", "10550", "10801", "10805", "11042", "11021", "11030", "11040", "11581", "11598",
-                "11001", "11561", "11509", "11516"]
+                "11001", "11561", "11509", "11516", "10803", "12144", "11559", "11580", "11557", "11003", "11010",
+                "11023", "11096", "11020", "11024", "11530", "11025"]
 
 cities = ["Staten Island", "New York", "Annadale", "Bronx", "Sunnyside", "Travis", "Elm Park", "Great Kills", "East Bronx",
           "Manhattan", "Long Island City", "New  York", "Greenpoint", "Brooklyn", "Astoria", "Queens", "East Elmhurst",
@@ -97,11 +111,24 @@ cities = ["Staten Island", "New York", "Annadale", "Bronx", "Sunnyside", "Travis
           "Rockaway Park", "Broad Channel", "Arverne", "Kew Gardens", "Coney Island", "Canarsie", "Midwood", "Breezy Point",
           "East Flatbush", "Ridgewood", "Glendale", "Elmhurst", "Jackson Heights", "Bayside", "Douglaston", "Bellerose",
           "Downtown Brooklyn", "Gowanus", "South Ozone Park", "Richmond Hill", "Bushwick", "East Williamsburg", "Flatbush",
-          "Prospect Lefferts Gardens", "Woodhaven", "East New York"]
+          "Prospect Lefferts Gardens", "Woodhaven", "East New York", "Sunset Park", "Randall Manor", "Mariners Harbor",
+          "Saint George", "New Dorp Beach", "Bronx Riverdale", "Morris Heights", "West Bronx", "Woodstock", "Chelsea", 
+          "Canal Street", "Roosevelt Island", "New york", "Maspeth", "Middletown - Pelham Bay", "Throggs Neck", "Malba",
+          "Fresh Meadows", "Little Neck", "Far Rockaway", "Rockaway Beach", "Cambria Heights", "Saint Albans", "Howard Beach",
+          "South Richmond Hill", "Bath Beach", "Brighton Beach", "Gravesend", "Sheepshead Bay", "Bay Ridge", "Carroll Gardens",
+          "Borough Park", "Brooklyn Heights", "Stockholm", "Brownsville", "Jamacia", "Tottenville", "Fleetwood - Concourse Village",
+          "E Elmhurst", "Middle Village", "Norwood", "Oakland Gardens", "Fresh Meadow", "Queens Village", "Glen Oaks",
+          "Kensington", "Dyker Heights", "Cypress Hills", "Flatlands", "Bensonhurst", "Marine Park", "Forrest Hills",
+          "Boerum Hill", "Floral Park", "New York City", "Harlem", "Eltingville", "Bay Terrace", "Lighthouse Hill",
+          "Belle Harbor", "St. Albans", "Rockaway", "Tompkinsville", "New Dorp", "Fordham Manor", "Fieldston", "Foxhurst",
+          "NY", "Tompkins Park North", "Cobble Hill", "Corona Queens", "Grymes Hill", "Central Park", "Park Hill", 
+          "Bellerose Queens", "Riverdale", "Kingsbridge", "Belmont", "Tremont", "Concourse", "Travis - Chelsea",
+          "Heartland Village", "Red Hook", "Spuyten Duyvil", "Greenwood", "Flatbush - Ditmas Park", "Seaside", "Mill Basin",
+          "Mapleton", "Windsor Terrace", "Corona", "Prince's Bay"]
 
 def getBusinessData(data, W, E, N, S):
   global count
-  global foundLocs
+  global locDict
   global duplicateCounter
 
   startCount = count
@@ -109,24 +136,24 @@ def getBusinessData(data, W, E, N, S):
   #Print out the result
   for i in range(len(data["businesses"])):
     # check if we already found this location
-    if foundLocs.has_key(data['businesses'][i]['id'].encode('utf8')): 
+    if locDict.has_key(data['businesses'][i]['id'].encode('utf8')): 
       # print "*** Already had key: ", data['businesses'][i]['id'].encode('utf8')
       continue
     else:
-      foundLocs[data['businesses'][i]['id'].encode('utf8')] = 1
+      locDict[data['businesses'][i]['id'].encode('utf8')] = 1
 
-
+    # check to see that the location has the right zip code
     if zipsExist:
       try:
-        zippy = str(data['businesses'][i]['location']['postal_code']).encode('utf8')
+        thisZip = str(data['businesses'][i]['location']['postal_code']).encode('utf8')
         thisCity = data['businesses'][i]['location']['city'].encode('utf8')
-        if zippy not in zipCodes and thisCity not in cities:
-          # print data['businesses'][i]['id'].encode('utf8'), "with zip: ", zippy, "not in zipcodes\n"
+        if thisZip not in zipCodes and thisCity not in cities:
+          # print data['businesses'][i]['id'].encode('utf8'), "with zip: ", thisZip, "not in zipcodes\n"
 
-          if zippy[0] != "0" and zippy not in zipsToIgnore:
-            badZipFilename = city + "Data/" + "badZip.txt"
+          if thisZip[0] != "0" and thisZip not in zipsToIgnore:
+            badZipFilename = city + "Data2/" + "badZip.txt"
             f = open(badZipFilename, "a")
-            f.write(data['businesses'][i]['id'].encode('utf8')+ " " + thisCity + " " + zippy + "\n")
+            f.write(data['businesses'][i]['id'].encode('utf8')+ " " + thisCity + " " + thisZip + "\n")
             f.close()
           continue
       except:
@@ -135,14 +162,14 @@ def getBusinessData(data, W, E, N, S):
           thisCity = data['businesses'][i]['location']['city'].encode('utf8')
           if thisCity not in cities:
 
-            noZipFilename = city + "Data/" + "noZips.txt"
+            noZipFilename = city + "Data2/" + "noZips.txt"
             f = open(noZipFilename, "a")
             f.write(data['businesses'][i]['id'].encode('utf8') + " " + thisCity + "\n")
             f.close()
 
             continue
         except:
-          noZipFilename = city + "Data/" + "noZips.txt"
+          noZipFilename = city + "Data2/" + "noZips.txt"
           f = open(noZipFilename, "a")
           f.write(data['businesses'][i]['id'].encode('utf8')+"\n")
           f.close()
@@ -253,7 +280,7 @@ def loadZips():
   global zipCodes
   global zipsExist
 
-  zipfile = city + "Data/" + city + "ZipCodes.txt"
+  zipfile = city + "Data2/" + city + "ZipCodes.txt"
 
   if os.path.isfile(zipfile):
     zipsExist = True
@@ -275,6 +302,12 @@ def loadKeys():
   yelp_auth2["t"] = key2[2]
   yelp_auth2["t_secret"] = key2[3]
 
+def loadLocDict():
+  dictFile = city + "Data2/" + city + "LocationDictionary.json"
+
+  with open(dictFile) as f:
+    locDict = json.load(f)
+
 def main():
 
   #encoding: utf-8
@@ -286,17 +319,17 @@ def main():
   global filename
   global apiHits
   global count
-  global foundLocs
 
   loadZips()
   loadKeys()
+  loadLocDict()
 
   start = time.time()
 
   for dest in destList:
 
     locType = dest
-    filename = city + "Data/" + dest + ".tsv"
+    filename = city + "Data2/" + dest + ".tsv"
 
     #add header
     fout = open(filename, "w")
@@ -306,17 +339,25 @@ def main():
 
     print "starting quad search for location: " + locType
     
-    # for large cities with weird geometry, you can split it up into rectangle sections and put each section into a g_box.
-    # then, just do quadSearch(gbox...) for each section.
-
     locStart = time.time()
-    
-    quadSearch(g_box1["W"], g_box1["E"], g_box1["N"], g_box1["S"], g_box1["W"], g_box1["E"], g_box1["N"], g_box1["S"])
-    print "\nfinished staten island with", count, "locs and", apiHits, "apiHits.\n"
-    
-    quadSearch(g_box2["W"], g_box2["E"], g_box2["N"], g_box2["S"], g_box2["W"], g_box2["E"], g_box2["N"], g_box2["S"])
-    print "\nfinished Bronx, Brooklyn, Manhattan"
-    
+    # try:
+    quadSearch(bb_nyc["W"], bb_nyc["E"], bb_nyc["N"], bb_nyc["S"], bb_nyc["W"], bb_nyc["E"], bb_nyc["N"], bb_nyc["S"])
+    print "\nfinished", city, "with", count, "locs and", apiHits, "apiHits.\n"
+
+    dictFile = city + "Data2/" + city + "LocationDictionary.json"
+
+    with open(dictFile, "w") as f:
+      json.dump(locDict, f)
+
+    # except:
+    #   print "Error in quad search for", locType, "with", count, "locs. Saving dictionary and exiting"
+    #   dictFile = city + "Data2/" + city + "LocationDictionary.json"
+
+    #   with open(dictFile, "w") as f:
+    #     json.dump(locDict, f)
+
+    #   return
+
     locEnd = time.time()
 
     elapsedTime = locEnd - locStart
@@ -326,7 +367,7 @@ def main():
     print "Hit the api", apiHits, "times and got", count, "locations.\n"
 
     # write out number of locations and api calls to stats file
-    statsFilename = city + "Data/" + "stats.txt"
+    statsFilename = city + "Data2/" + "stats.txt"
     fstats = open(statsFilename, "a")
     stat = locType + " " + str(count) + " " + str(apiHits) + " " + str(elapsedTime) + "\n"
     fstats.write(stat)
@@ -334,7 +375,6 @@ def main():
 
     apiHits = 0
     count = 0
-    foundLocs.clear()
 
   end = time.time()
 
